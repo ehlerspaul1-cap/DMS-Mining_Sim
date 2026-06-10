@@ -338,6 +338,71 @@ a {
     gap: 12px;
 }
 
+.modal-card--pfs {
+    width: min(760px, 100%);
+    max-height: calc(100vh - 48px);
+    overflow: auto;
+}
+
+.pfs-note,
+.pfs-disclaimer {
+    color: var(--muted);
+}
+
+.pfs-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 22px 0;
+}
+
+.pfs-grid > div {
+    display: grid;
+    gap: 4px;
+    min-height: 82px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.pfs-grid span,
+.pfs-confidence {
+    color: var(--muted);
+    font-size: 0.82rem;
+}
+
+.pfs-grid strong {
+    font-size: 1.08rem;
+}
+
+.pfs-positive strong {
+    color: var(--green);
+}
+
+.pfs-negative strong {
+    color: #ff8b9b;
+}
+
+.pfs-confidence {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.pfs-confidence span {
+    padding: 6px 9px;
+    border-radius: 999px;
+    background: rgba(155, 98, 184, 0.14);
+}
+
+.pfs-disclaimer {
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 0.8rem;
+}
+
 .dialog-card {
     display: grid;
     grid-template-columns: minmax(150px, 260px) minmax(0, 620px);
@@ -801,6 +866,10 @@ a {
     }
 
     .action-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .pfs-grid {
         grid-template-columns: 1fr;
     }
 

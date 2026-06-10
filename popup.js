@@ -110,8 +110,8 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         {
             id: 'resource',
-            title: 'Build the resource',
-            description: 'Review tonnes, grade, recovery, mining cost and processing cost.',
+            title: 'Run a mini PFS',
+            description: 'Evaluate only the resource supported by exploration and drilling data.',
             buttonId: 'build-button'
         },
         {
@@ -862,12 +862,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showFullResource() {
-        if (!state.isDMSPopupShown) {
-            showDMSPopup();
-            state.isDMSPopupShown = true;
-        } else {
-            finalizeBuildResource();
-        }
+        showDMSPopup();
     }
 
     function showDMSPopup() {
@@ -876,15 +871,15 @@ document.addEventListener('DOMContentLoaded', () => {
         dmsPopup.innerHTML = `
 			<div class="modal-card modal-card--resource" role="dialog" aria-modal="true" aria-labelledby="resource-modal-title">
                 <img class="modal-logo" src="icon.png" alt="DMS Mining">
-                <p class="eyebrow">Resource evaluation</p>
-                <h2 id="resource-modal-title">Build the resource model</h2>
+                <p class="eyebrow">Pre-feasibility screening</p>
+                <h2 id="resource-modal-title">Run a mini PFS</h2>
                 <p>
-                    DMS Mining will compile the geological information into a resource
-                    summary with tonnes, grade, recovery and indicative project costs.
+                    Evaluate only the blocks supported by surface exploration and drill
+                    intersections. Untested areas will remain unknown and hidden.
                 </p>
                 <div class="modal-actions">
                     <a class="button button--ghost" href="https://www.dms-mining.com.na" target="_blank" rel="noopener">Visit DMS Mining</a>
-                    <button id="continue-button" class="button button--primary" type="button">Build resource</button>
+                    <button id="continue-button" class="button button--primary" type="button">Run study</button>
                 </div>
             </div>
         `;
@@ -897,101 +892,176 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function finalizeBuildResource() {
-        console.log("Building resource...");
-        ctx.clearRect(0, 0, state.blockSizeWidth, state.blockSizeHeight);
-        state.blockData = JSON.parse(JSON.stringify(state.originalBlockData));
-        const texturePattern = ctx.createPattern(state.textureImage, 'repeat');
-        let totalCopperTons = 0;
-        let totalCoalTons = 0;
-        let totalCopperContainedTons = 0;
-        let totalCoalContainedTons = 0;
-        let totalCoalGrade = 0;
-        let coalBlocks = 0;
-        let totalOreGrade = 0;
-        let totalOreBlocks = 0;
-        let totalRecovery = 0;
-        let totalRecoveryCount = 0;
-        let totalOCMiningCost = 0;
-        let totalProcessingCost = 0;
+        console.log("Running mini PFS...");
+        if (!spendBudget(constants.BUILD_RESOURCE_COST, 'the mini PFS')) {
+            return;
+        }
+
+        const confidenceTons = {
+            measured: 0,
+            indicated: 0,
+            inferred: 0
+        };
+        let oreTons = 0;
+        let wasteTons = 0;
+        let weightedGrade = 0;
+        let weightedCoalGrade = 0;
+        let coalTons = 0;
+        let copperTons = 0;
+        let supportedBlocks = 0;
+
+        function nearestDistance(x, y, locations) {
+            if (!locations.length) {
+                return Infinity;
+            }
+            return locations.reduce((nearest, location) => {
+                const distance = Math.hypot(location.x - x, location.y - y);
+                return Math.min(nearest, distance);
+            }, Infinity);
+        }
+
         for (let y = 0; y < state.blockSizeHeight; y += state.mineSize) {
             for (let x = 0; x < state.blockSizeWidth; x += state.mineSize) {
-                const value = state.blockData[y / state.mineSize][x / state.mineSize];
-                if (value === 5) {
-                    const coalGrade = state.blockCoalGrades[y / state.mineSize][x / state.mineSize];
-                    let color;
-                    if (coalGrade > 6000) {
-                        color = '#FFFFFF';
-                    } else if (coalGrade >= 5000) {
-                        color = '#A9A9A9';
-                    } else {
-                        color = '#696969';
-                    }
-                    ctx.fillStyle = color;
-                } else {
-                    ctx.fillStyle = value === 1 ? texturePattern : state.blockColors[value - 1];
+                const drillDistance = nearestDistance(x, y, state.drillLocations);
+                const surfaceDistance = nearestDistance(x, y, state.surfaceExplorationLocations);
+                let confidence = null;
+
+                if (drillDistance <= state.mineSize) {
+                    confidence = 'measured';
+                } else if (drillDistance <= state.estimateRadius) {
+                    confidence = 'indicated';
+                } else if (
+                    drillDistance <= state.estimateRadius * 1.5 ||
+                    surfaceDistance <= state.estimateRadius
+                ) {
+                    confidence = 'inferred';
                 }
-                ctx.fillRect(x, y, state.mineSize, state.mineSize);
-                ctx.strokeStyle = 'black';
-                ctx.strokeRect(x, y, state.mineSize, state.mineSize);
+
+                if (!confidence) {
+                    continue;
+                }
+
+                supportedBlocks++;
+                const blockY = y / state.mineSize;
+                const blockX = x / state.mineSize;
+                const value = state.originalBlockData[blockY][blockX];
+
                 if (value === 2 || value === 3 || value === 4) {
                     const grade = value === 2 ? 2 : value === 3 ? 3 : 4;
                     const blockTons = state.mineSize * state.mineSize * 10 * constants.COPPER_DENSITY;
-                    totalCopperTons += blockTons;
-                    totalOreBlocks++;
-                    totalOreGrade += grade;
-                    totalRecovery += (y / state.mineSize < 2) ? 65 : 90;
-                    totalRecoveryCount++;
-                    totalCopperContainedTons += (blockTons * grade * ((y / state.mineSize < 2) ? 65 : 90)) / 10000;
-                    totalOCMiningCost += blockTons * constants.ORE_MINING_COST_OC;
-                    totalProcessingCost += blockTons * constants.PROCESSING_COST_PER_TON;
+                    oreTons += blockTons;
+                    copperTons += blockTons;
+                    weightedGrade += grade * blockTons;
+                    confidenceTons[confidence] += blockTons;
                 } else if (value === 5) {
                     const blockTons = state.mineSize * state.mineSize * 10 * constants.COAL_DENSITY;
-                    totalCoalTons += blockTons;
-                    totalCoalContainedTons += blockTons;
-                    totalCoalGrade += state.blockCoalGrades[y / state.mineSize][x / state.mineSize];
-                    coalBlocks++;
+                    oreTons += blockTons;
+                    coalTons += blockTons;
+                    weightedCoalGrade += state.blockCoalGrades[blockY][blockX] * blockTons;
+                    confidenceTons[confidence] += blockTons;
                 } else if (value === 1) {
                     const blockTons = state.mineSize * state.mineSize * 10 * constants.WASTE_DENSITY;
-                    totalOCMiningCost += blockTons * constants.WASTE_MINING_COST_OC;
+                    wasteTons += blockTons;
                 }
             }
         }
-        let resourceValue = 0;
-        if (totalCopperContainedTons > 0) {
-            resourceValue = totalCopperContainedTons * state.COPPER_PRICE_PER_TON;
-            const averageGrade = totalOreBlocks > 0 ? (totalOreGrade / totalOreBlocks).toFixed(2) : 0;
-            const averageRecovery = totalRecoveryCount > 0 ? (totalRecovery / totalRecoveryCount).toFixed(2) : 0;
-            elements.totalResourceValueElement.textContent = `
-            Total Copper Tons: ${formatNumber(totalCopperContainedTons.toFixed(2))} tons ($${formatNumber(resourceValue.toFixed(2))})
-            Average Grade: ${averageGrade}
-            Average Recovery: ${averageRecovery}
-            Total OC Mining Cost: $${formatNumber(totalOCMiningCost.toFixed(2))}
-            Total Processing Cost: $${formatNumber(totalProcessingCost.toFixed(2))}
-        `;
-        } else if (totalCoalContainedTons > 0) {
-            resourceValue = totalCoalContainedTons * constants.COAL_PRICE_PER_TON;
-            const averageCoalGrade = coalBlocks > 0 ? (totalCoalGrade / coalBlocks).toFixed(2) : 0;
-            elements.totalResourceValueElement.textContent = `
-            Total Coal Tons: ${formatNumber(totalCoalContainedTons.toFixed(2))} tons ($${formatNumber(resourceValue.toFixed(2))})
-            Average GCV: ${averageCoalGrade} kcal/kg
-            Total OC Mining Cost: $${formatNumber(totalOCMiningCost.toFixed(2))}
-            Total Processing Cost: $${formatNumber(totalProcessingCost.toFixed(2))}
-        `;
+
+        const recovery = Math.min(0.98, state.recoveryRate);
+        const averageGrade = copperTons > 0 ? weightedGrade / copperTons : 0;
+        const averageCoalGrade = coalTons > 0 ? weightedCoalGrade / coalTons : 0;
+        const containedCopper = copperTons * (averageGrade / 100);
+        const recoveredCopper = containedCopper * recovery;
+        const copperValue = recoveredCopper * state.COPPER_PRICE_PER_TON;
+        const coalValue = coalTons * constants.COAL_PRICE_PER_TON;
+        const grossValue = copperValue + coalValue;
+        const miningCost =
+            oreTons * constants.ORE_MINING_COST_OC +
+            wasteTons * constants.WASTE_MINING_COST_OC;
+        const processingCost =
+            copperTons * constants.PROCESSING_COST_PER_TON +
+            coalTons * constants.COAL_PROCESSING_COST_PER_TON;
+        const indicativeMargin =
+            grossValue - miningCost - processingCost - constants.BUILD_RESOURCE_COST;
+        const strippingRatio = oreTons > 0 ? wasteTons / oreTons : 0;
+
+        elements.totalResourceValueElement.textContent = `$${formatNumber(grossValue.toFixed(0))}`;
+        document.getElementById('average-grade').textContent =
+            copperTons > 0
+                ? `Average grade: ${averageGrade.toFixed(2)}% Cu`
+                : coalTons > 0
+                    ? `Average GCV: ${averageCoalGrade.toFixed(0)} kcal/kg`
+                    : 'Average grade: no supported resource';
+        document.getElementById('average-recovery').textContent =
+            `Assumed recovery: ${(recovery * 100).toFixed(0)}%`;
+
+        const result = {
+            supportedBlocks,
+            oreTons,
+            wasteTons,
+            confidenceTons,
+            averageGrade,
+            averageCoalGrade,
+            recoveredCopper,
+            grossValue,
+            miningCost,
+            processingCost,
+            indicativeMargin,
+            strippingRatio
+        };
+
+        if (oreTons > 0) {
+            showPfsResults(result);
         } else {
-            elements.totalResourceValueElement.textContent = `
-            No valuable resources found.
-            Total OC Mining Cost: $${formatNumber(totalOCMiningCost.toFixed(2))}
-            Total Processing Cost: $${formatNumber(totalProcessingCost.toFixed(2))}
-        `;
+            showPfsResults(result, true);
         }
-        const resourceBuildingCost = constants.BUILD_RESOURCE_COST;
-        state.budget -= resourceBuildingCost;
-        state.totalCost += resourceBuildingCost;
-        updateBudgetDisplay();
+
         completeObjective('resource');
-        console.log("Resource built.");
-        console.log(`Total OC Mining Cost: $${totalOCMiningCost.toFixed(2)}`);
-        console.log(`Total Processing Cost: $${totalProcessingCost.toFixed(2)}`);
+        console.log("Mini PFS completed.");
+    }
+
+    function showPfsResults(result, noResource = false) {
+        const pfsPopup = document.createElement('div');
+        pfsPopup.className = 'modal-overlay';
+        const marginClass = result.indicativeMargin >= 0 ? 'pfs-positive' : 'pfs-negative';
+        const resourceLabel = result.averageCoalGrade > 0 ? 'Coal resource' : 'Copper resource';
+        const gradeLabel = result.averageCoalGrade > 0
+            ? `${result.averageCoalGrade.toFixed(0)} kcal/kg average GCV`
+            : `${result.averageGrade.toFixed(2)}% Cu average grade`;
+
+        pfsPopup.innerHTML = `
+            <div class="modal-card modal-card--pfs" role="dialog" aria-modal="true" aria-labelledby="pfs-title">
+                <p class="eyebrow">Mini PFS result</p>
+                <h2 id="pfs-title">${noResource ? 'No supported resource defined' : 'Indicative project case'}</h2>
+                <p class="pfs-note">
+                    Based only on drill intersections and surface-supported blocks.
+                    Untested areas remain excluded.
+                </p>
+                <div class="pfs-grid">
+                    <div><span>Data-supported blocks</span><strong>${formatNumber(result.supportedBlocks)}</strong></div>
+                    <div><span>${resourceLabel}</span><strong>${formatNumber(result.oreTons.toFixed(0))} t</strong></div>
+                    <div><span>Quality</span><strong>${gradeLabel}</strong></div>
+                    <div><span>Stripping ratio</span><strong>${result.strippingRatio.toFixed(2)} : 1</strong></div>
+                    <div><span>Gross recovered value</span><strong>$${formatNumber(result.grossValue.toFixed(0))}</strong></div>
+                    <div><span>Mining cost</span><strong>$${formatNumber(result.miningCost.toFixed(0))}</strong></div>
+                    <div><span>Processing cost</span><strong>$${formatNumber(result.processingCost.toFixed(0))}</strong></div>
+                    <div class="${marginClass}"><span>Indicative margin</span><strong>$${formatNumber(result.indicativeMargin.toFixed(0))}</strong></div>
+                </div>
+                <div class="pfs-confidence">
+                    <span>Measured: ${formatNumber(result.confidenceTons.measured.toFixed(0))} t</span>
+                    <span>Indicated: ${formatNumber(result.confidenceTons.indicated.toFixed(0))} t</span>
+                    <span>Inferred: ${formatNumber(result.confidenceTons.inferred.toFixed(0))} t</span>
+                </div>
+                <p class="pfs-disclaimer">
+                    Educational screening result only. It is not a code-compliant mineral
+                    resource estimate or professional pre-feasibility study.
+                </p>
+                <button class="button button--primary" id="close-pfs-button" type="button">Return to project</button>
+            </div>
+        `;
+        document.body.appendChild(pfsPopup);
+        pfsPopup.querySelector('#close-pfs-button').addEventListener('click', () => {
+            document.body.removeChild(pfsPopup);
+        });
     }
 
     function mineBlock(x, y) {
