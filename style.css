@@ -319,6 +319,25 @@ a {
     color: var(--muted);
 }
 
+.modal-card--resource {
+    width: min(560px, 100%);
+}
+
+.modal-logo {
+    display: block;
+    width: min(210px, 55%);
+    max-height: 70px;
+    margin-bottom: 24px;
+    object-fit: contain;
+    object-position: left center;
+}
+
+.modal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
 .dialog-card {
     display: grid;
     grid-template-columns: minmax(150px, 260px) minmax(0, 620px);

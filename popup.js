@@ -872,13 +872,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function showDMSPopup() {
         const dmsPopup = document.createElement('div');
+        dmsPopup.className = 'modal-overlay';
         dmsPopup.innerHTML = `
-				<div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: white; color: #17111f; padding: 24px; border: 1px solid black; border-radius: 12px; z-index: 1000; width: min(520px, calc(100% - 40px));">
-                <img src="icon.png" alt="DMS Mining Logo" style="width: 100px; height: auto;">
-                <h2>DMS Mining</h2><a href="http://www.dms-mining.com.na">Visit DMS Mining</a>
-                <p>www.dms-mining.com.na</p>
-                <p>Welcome to the DMS Mining Resource Building Service. Our state-of-the-art technology and expertise ensure the best resource evaluations.</p>
-                <button id="continue-button">Continue</button>
+			<div class="modal-card modal-card--resource" role="dialog" aria-modal="true" aria-labelledby="resource-modal-title">
+                <img class="modal-logo" src="icon.png" alt="DMS Mining">
+                <p class="eyebrow">Resource evaluation</p>
+                <h2 id="resource-modal-title">Build the resource model</h2>
+                <p>
+                    DMS Mining will compile the geological information into a resource
+                    summary with tonnes, grade, recovery and indicative project costs.
+                </p>
+                <div class="modal-actions">
+                    <a class="button button--ghost" href="https://www.dms-mining.com.na" target="_blank" rel="noopener">Visit DMS Mining</a>
+                    <button id="continue-button" class="button button--primary" type="button">Build resource</button>
+                </div>
             </div>
         `;
         document.body.appendChild(dmsPopup);
@@ -1150,6 +1157,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function conductGeophysicalStudy() {
         console.log("Conducting geophysical study...");
+        if (!spendBudget(constants.GEO_COST, 'the geophysical study')) {
+            return;
+        }
+        state.totalExplorationCost += constants.GEO_COST;
+        completeObjective('geophysics');
+
         state.geoStudyResults = [];
         for (let y = 0; y < state.blockSizeHeight; y += state.mineSize) {
             for (let x = 0; x < state.blockSizeWidth; x += state.mineSize) {
@@ -1162,7 +1175,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         state.geoStudyResults.push({ x: hintX, y: hintY });
                         state.explorationLocations.push({ x: hintX, y: hintY });
                         console.log(`Hint at (${hintX}, ${hintY}) for ore block at (${x * state.mineSize}, ${y * state.mineSize})`);
-                        generateReport();
                     }
                 }
             }
@@ -1175,13 +1187,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.stroke();
             console.log(`Drawing circle at (${result.x}, ${result.y})`);
         });
-        const geophysicalCost = constants.GEO_COST;
-        state.budget -= geophysicalCost;
-        state.totalExplorationCost += geophysicalCost;
-        state.totalCost += geophysicalCost;
-        updateBudgetDisplay();
         generateReport();
-        completeObjective('geophysics');
         console.log("Geophysical study completed.");
     }
 
