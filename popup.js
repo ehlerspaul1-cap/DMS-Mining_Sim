@@ -137,6 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
         totalCost: 0,
         totalRevenue: 0,
         surveyResults: [],
+        blockModelBlocks: [],
         drillingCostPerUnit: 1,
         totalDrillingCost: 0,
         totalDrillingRevenue: 0,
@@ -829,36 +830,78 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function createBlockModel() {
-        console.log("Conducting geological survey...");
-        state.surveyResults = [];
-        state.budget -= constants.CREATE_BLOCK_MODEL_COST;
+        console.log("Creating block model...");
+        if (state.totalDrilledLength <= 0) {
+            alert('Complete at least one drillhole before creating the block model.');
+            return;
+        }
+        if (!spendBudget(constants.CREATE_BLOCK_MODEL_COST, 'the block model')) {
+            return;
+        }
         state.totalExplorationCost += constants.CREATE_BLOCK_MODEL_COST;
-        state.totalCost += constants.CREATE_BLOCK_MODEL_COST;
-        updateBudgetDisplay();
+        state.surveyResults = [];
+        state.blockModelBlocks = [];
+        const texturePattern = ctx.createPattern(state.textureImage, 'repeat');
+
+        ctx.clearRect(0, 0, state.blockSizeWidth, state.blockSizeHeight);
         for (let y = 0; y < state.blockSizeHeight; y += state.mineSize) {
             for (let x = 0; x < state.blockSizeWidth; x += state.mineSize) {
-                const value = state.originalBlockData[y / state.mineSize][x / state.mineSize];
-                if (value > 1) {
-                    console.log(`Ore block found at (${x * state.mineSize}, ${y * state.mineSize}) with value ${value}`);
-                    const hintX = Math.floor(x / state.mineSize) * state.mineSize;
-                    const hintY = 0;
-                    if (hintX >= 0 && hintX < state.blockSizeWidth) {
-                        state.surveyResults.push({ x: hintX, y: hintY });
-                        console.log(`Hint at (${hintX}, ${hintY}) for ore block at (${x * state.mineSize}, ${y * state.mineSize})`);
+                const blockY = y / state.mineSize;
+                const blockX = x / state.mineSize;
+                const value = state.originalBlockData[blockY][blockX];
+                const confidence = getBlockModelConfidence(x, y);
+
+                ctx.fillStyle = texturePattern;
+                if (confidence) {
+                    state.blockModelBlocks.push({ x, y, blockX, blockY, value, confidence });
+                    if (value === 5) {
+                        const coalGrade = state.blockCoalGrades[blockY][blockX];
+                        ctx.fillStyle = coalGrade > 6000
+                            ? '#FFFFFF'
+                            : coalGrade >= 5000
+                                ? '#A9A9A9'
+                                : '#696969';
+                    } else if (value > 1) {
+                        ctx.fillStyle = state.blockColors[value - 1];
                     }
                 }
+                ctx.fillRect(x, y, state.mineSize, state.mineSize);
+                ctx.strokeStyle = 'black';
+                ctx.strokeRect(x, y, state.mineSize, state.mineSize);
             }
         }
-        console.log("Geological survey results:", state.surveyResults);
-        state.surveyResults.forEach(result => {
-            ctx.strokeStyle = 'blue';
-            ctx.beginPath();
-            ctx.arc(result.x + state.mineSize / 2, result.y + state.mineSize / 2, state.mineSize / 2, 0, 2 * Math.PI);
-            ctx.stroke();
-            console.log(`Drawing circle at (${result.x}, ${result.y})`);
-        });
+        elements.canvas.dataset.modelBlocks = state.blockModelBlocks.length;
         completeObjective('block-model');
-        console.log("Geological survey completed.");
+        console.log(`Block model created with ${state.blockModelBlocks.length} supported blocks.`);
+    }
+
+    function nearestDistance(x, y, locations) {
+        if (!locations.length) {
+            return Infinity;
+        }
+        return locations.reduce((nearest, location) => {
+            const distance = Math.hypot(location.x - x, location.y - y);
+            return Math.min(nearest, distance);
+        }, Infinity);
+    }
+
+    function getBlockModelConfidence(x, y) {
+        const drillDistance = nearestDistance(x, y, state.drillLocations);
+        const surfaceDistance = nearestDistance(x, y, state.surfaceExplorationLocations);
+
+        if (drillDistance <= state.mineSize) {
+            return 'measured';
+        }
+        if (drillDistance <= state.estimateRadius) {
+            return 'indicated';
+        }
+        if (
+            drillDistance <= state.estimateRadius * 1.5 ||
+            surfaceDistance <= state.estimateRadius
+        ) {
+            return 'inferred';
+        }
+        return null;
     }
 
     function showFullResource() {
@@ -901,6 +944,10 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Estimate the resource and create the block model before running the mini PFS.');
             return;
         }
+        if (!state.blockModelBlocks.length) {
+            alert('The current block model contains no supported blocks.');
+            return;
+        }
         if (!spendBudget(constants.BUILD_RESOURCE_COST, 'the mini PFS')) {
             return;
         }
@@ -918,59 +965,26 @@ document.addEventListener('DOMContentLoaded', () => {
         let copperTons = 0;
         let supportedBlocks = 0;
 
-        function nearestDistance(x, y, locations) {
-            if (!locations.length) {
-                return Infinity;
-            }
-            return locations.reduce((nearest, location) => {
-                const distance = Math.hypot(location.x - x, location.y - y);
-                return Math.min(nearest, distance);
-            }, Infinity);
-        }
+        for (const modelBlock of state.blockModelBlocks) {
+            const { blockX, blockY, value, confidence } = modelBlock;
+            supportedBlocks++;
 
-        for (let y = 0; y < state.blockSizeHeight; y += state.mineSize) {
-            for (let x = 0; x < state.blockSizeWidth; x += state.mineSize) {
-                const drillDistance = nearestDistance(x, y, state.drillLocations);
-                const surfaceDistance = nearestDistance(x, y, state.surfaceExplorationLocations);
-                let confidence = null;
-
-                if (drillDistance <= state.mineSize) {
-                    confidence = 'measured';
-                } else if (drillDistance <= state.estimateRadius) {
-                    confidence = 'indicated';
-                } else if (
-                    drillDistance <= state.estimateRadius * 1.5 ||
-                    surfaceDistance <= state.estimateRadius
-                ) {
-                    confidence = 'inferred';
-                }
-
-                if (!confidence) {
-                    continue;
-                }
-
-                supportedBlocks++;
-                const blockY = y / state.mineSize;
-                const blockX = x / state.mineSize;
-                const value = state.originalBlockData[blockY][blockX];
-
-                if (value === 2 || value === 3 || value === 4) {
-                    const grade = value === 2 ? 2 : value === 3 ? 3 : 4;
-                    const blockTons = state.mineSize * state.mineSize * 10 * constants.COPPER_DENSITY;
-                    oreTons += blockTons;
-                    copperTons += blockTons;
-                    weightedGrade += grade * blockTons;
-                    confidenceTons[confidence] += blockTons;
-                } else if (value === 5) {
-                    const blockTons = state.mineSize * state.mineSize * 10 * constants.COAL_DENSITY;
-                    oreTons += blockTons;
-                    coalTons += blockTons;
-                    weightedCoalGrade += state.blockCoalGrades[blockY][blockX] * blockTons;
-                    confidenceTons[confidence] += blockTons;
-                } else if (value === 1) {
-                    const blockTons = state.mineSize * state.mineSize * 10 * constants.WASTE_DENSITY;
-                    wasteTons += blockTons;
-                }
+            if (value === 2 || value === 3 || value === 4) {
+                const grade = value === 2 ? 2 : value === 3 ? 3 : 4;
+                const blockTons = state.mineSize * state.mineSize * 10 * constants.COPPER_DENSITY;
+                oreTons += blockTons;
+                copperTons += blockTons;
+                weightedGrade += grade * blockTons;
+                confidenceTons[confidence] += blockTons;
+            } else if (value === 5) {
+                const blockTons = state.mineSize * state.mineSize * 10 * constants.COAL_DENSITY;
+                oreTons += blockTons;
+                coalTons += blockTons;
+                weightedCoalGrade += state.blockCoalGrades[blockY][blockX] * blockTons;
+                confidenceTons[confidence] += blockTons;
+            } else if (value === 1) {
+                const blockTons = state.mineSize * state.mineSize * 10 * constants.WASTE_DENSITY;
+                wasteTons += blockTons;
             }
         }
 
@@ -1709,6 +1723,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Reset completed. Mine button disabled.");
         state.explorationLocations = [];
         state.drillLocations = [];
+        state.blockModelBlocks = [];
         state.oreStockpile = [];
         state.wasteStockpile = [];
         state.totalOreTons = 0;
@@ -1732,6 +1747,7 @@ document.addEventListener('DOMContentLoaded', () => {
         displaySeed();
         updateBudgetDisplay();
         elements.totalResourceValueElement.textContent = '$0.00';
+        delete elements.canvas.dataset.modelBlocks;
         elements.getFundingButton.disabled = true;
         [elements.drillButton, elements.mineOpenCutButton, elements.mineUndergroundButton]
             .forEach(button => button.classList.remove('selected'));
