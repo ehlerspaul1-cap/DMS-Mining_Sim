@@ -893,6 +893,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function finalizeBuildResource() {
         console.log("Running mini PFS...");
+        if (state.totalDrilledLength <= 0) {
+            alert('Complete at least one drillhole before running the mini PFS.');
+            return;
+        }
+        if (!state.completedObjectives['block-model']) {
+            alert('Estimate the resource and create the block model before running the mini PFS.');
+            return;
+        }
         if (!spendBudget(constants.BUILD_RESOURCE_COST, 'the mini PFS')) {
             return;
         }
