@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="DMS Mining educational mining simulator.">
+    <title>DMS Mining Simulator</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.anychart.com/releases/8.12.1/js/anychart-base.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/2.4.4/seedrandom.min.js"></script>
+</head>
+<body class="simulator-page">
+    <header class="site-header site-header--dark">
+        <a class="brand" href="popup-sim.html">
+            <img src="icon.png" alt="DMS Mining">
+            <span>DMS Mining Simulator</span>
+        </a>
+        <nav class="site-nav" aria-label="Simulator navigation">
+            <a href="popup-sim.html">Home</a>
+            <a href="https://www.youtube.com/@Paul_Ehlers" target="_blank" rel="noopener">Tutorials</a>
+            <button class="nav-button" id="about-button" type="button">Contact</button>
+        </nav>
+    </header>
+
+    <div class="intro-overlay" id="intro-screen">
+        <div class="dialog-card">
+            <img src="miner_female.png" alt="Mining guide">
+            <div>
+                <p class="eyebrow">Welcome</p>
+                <h1>Build your first mining project</h1>
+                <p>
+                    Follow the objectives from exploration through to mining.
+                    Your decisions affect the project budget and results.
+                </p>
+                <button id="intro-button" class="button button--primary" type="button">Begin briefing</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="intro-overlay" id="welcome-screen" style="display: none;">
+        <div class="dialog-card">
+            <img src="miners.png" alt="Mining team">
+            <div>
+                <p class="eyebrow">Project briefing</p>
+                <p class="dialogue-text" id="dialogue-text"></p>
+                <button id="dialogue-button" class="button button--primary" type="button">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <main id="main-section" class="simulator-shell">
+        <section class="sim-hero">
+            <div>
+                <p class="eyebrow">DMS learning simulator</p>
+                <h1>From geological uncertainty to an operating mine</h1>
+                <p>Complete the objectives, protect the budget and build confidence in each decision.</p>
+            </div>
+            <img src="miners.png" alt="" aria-hidden="true">
+        </section>
+
+        <section class="dashboard-grid">
+            <aside class="panel objective-panel" aria-live="polite">
+                <div class="panel-heading">
+                    <div>
+                        <p class="eyebrow">Current objective</p>
+                        <h2 id="objective-title">Conduct a geophysical study</h2>
+                    </div>
+                    <span class="objective-progress" id="objective-progress">0 / 7</span>
+                </div>
+                <p id="objective-description">
+                    Start with a broad scan to identify potential mineralised areas.
+                </p>
+                <div class="progress-track" aria-hidden="true">
+                    <span id="objective-progress-bar"></span>
+                </div>
+                <ol class="objective-list" id="objective-list"></ol>
+            </aside>
+
+            <section class="panel metrics-panel">
+                <div class="metric">
+                    <span>Available budget</span>
+                    <strong>$<span id="budget">10 000 000.00</span></strong>
+                </div>
+                <div class="metric">
+                    <span>Resource value</span>
+                    <strong id="total-resource-value">$0.00</strong>
+                </div>
+                <div class="metric">
+                    <span>Project seed</span>
+                    <strong id="seed-value">12345</strong>
+                </div>
+                <div id="average-grade"></div>
+                <div id="average-recovery"></div>
+                <div class="seed-control" id="seed-container">
+                    <label for="seed-input">Generate a repeatable geology</label>
+                    <div>
+                        <input type="number" id="seed-input" placeholder="Enter seed">
+                        <button id="set-seed-button" class="button button--small" type="button">Set seed</button>
+                    </div>
+                </div>
+            </section>
+        </section>
+
+        <section class="panel">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">Project actions</p>
+                    <h2>Choose the next activity</h2>
+                </div>
+            </div>
+            <div class="action-grid">
+                <button id="geo-button" class="action-card" type="button">
+                    <span class="action-card__step">Explore</span>
+                    <strong>Geophysical study</strong>
+                    <small>Cost: $5 000</small>
+                </button>
+                <button id="surface-exploration-button" class="action-card" type="button">
+                    <span class="action-card__step">Explore</span>
+                    <strong>Surface exploration</strong>
+                    <small>Cost: $2 500</small>
+                </button>
+                <button id="drill-button" class="action-card" type="button">
+                    <span class="action-card__step">Define</span>
+                    <strong>Simulate drillholes</strong>
+                    <small>Select two points on the canvas</small>
+                </button>
+                <button id="estimate-button" class="action-card" type="button">
+                    <span class="action-card__step">Define</span>
+                    <strong>Estimate resource</strong>
+                    <small>Reveal informed blocks</small>
+                </button>
+                <button id="survey-button" class="action-card" type="button">
+                    <span class="action-card__step">Model</span>
+                    <strong>Create block model</strong>
+                    <small>Cost: $15 000</small>
+                </button>
+                <button id="build-button" class="action-card" type="button">
+                    <span class="action-card__step">Evaluate</span>
+                    <strong>Build resource</strong>
+                    <small>Cost: $100 000</small>
+                </button>
+                <button id="mine-open-cut-button" class="action-card" type="button">
+                    <span class="action-card__step">Mine</span>
+                    <strong>Open pit mining</strong>
+                    <small>Mine from surface downward</small>
+                </button>
+                <button id="mine-underground-button" class="action-card" type="button">
+                    <span class="action-card__step">Mine</span>
+                    <strong>Underground mining</strong>
+                    <small>Mine from an exposed access</small>
+                </button>
+            </div>
+            <div class="utility-actions">
+                <button id="reset-button" class="button button--danger" type="button">Reset project</button>
+                <button id="upgrade-button" class="button" type="button">Project upgrades</button>
+                <button id="show-graphs-button" class="button" type="button">Production graphs</button>
+                <button id="get-funding-button" class="button" type="button" disabled>Apply for funding</button>
+            </div>
+        </section>
+
+        <section class="panel canvas-panel">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">Geological model</p>
+                    <h2>Mining canvas</h2>
+                </div>
+                <div class="legend" id="legend-container"></div>
+            </div>
+            <p class="canvas-help">
+                Drill mode: select a start and end point. Mining mode: select an accessible block.
+            </p>
+            <div id="grade-info"></div>
+            <div class="canvas-scroll">
+                <canvas id="block-canvas" width="1460" height="800"></canvas>
+            </div>
+        </section>
+
+        <section class="dashboard-grid">
+            <section class="panel">
+                <div class="panel-heading">
+                    <div>
+                        <p class="eyebrow">Material movement</p>
+                        <h2>Stockpile</h2>
+                    </div>
+                </div>
+                <div class="stockpile-wrap">
+                    <canvas id="stockpile-canvas" width="830" height="410"></canvas>
+                </div>
+            </section>
+
+            <section class="panel report-panel">
+                <div class="panel-heading">
+                    <div>
+                        <p class="eyebrow">Project controls</p>
+                        <h2>Reports</h2>
+                    </div>
+                </div>
+                <div class="report-actions">
+                    <button id="drill-report-button" class="button button--small" type="button">Show project report</button>
+                    <button id="stockpile-report-button" class="button button--small" type="button">Show stockpile report</button>
+                </div>
+                <div id="report-container" class="report-content" style="display: none;"></div>
+                <div id="stockpile-report-container" class="report-content" style="display: none;"></div>
+            </section>
+        </section>
+    </main>
+
+    <section class="workspace-section" id="upgrade-section" style="display: none;">
+        <div class="panel workspace-card">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">Investment decisions</p>
+                    <h2>Project upgrades</h2>
+                </div>
+                <button id="back-button" class="button button--small" type="button">Back to project</button>
+            </div>
+            <div class="upgrade-grid">
+                <div>
+                    <h3>People</h3>
+                    <button id="hire-engineer-button" class="upgrade-button" type="button">Hire engineer <span>$250 000</span></button>
+                    <button id="hire-geologist-button" class="upgrade-button" type="button">Hire geologist <span>$150 000</span></button>
+                    <button id="hire-metallurgist-button" class="upgrade-button" type="button">Hire metallurgist <span>$200 000</span></button>
+                    <button id="hire-sales-specialist-button" class="upgrade-button" type="button">Hire sales specialist <span>$200 000</span></button>
+                </div>
+                <div>
+                    <h3>Equipment</h3>
+                    <button class="upgrade-button" type="button" disabled>Upgrade drill and blast <span>Coming later</span></button>
+                    <button id="upgrade-exploration-rigs-button" class="upgrade-button" type="button">Upgrade exploration rigs <span>$300 000</span></button>
+                    <button class="upgrade-button" type="button" disabled>Upgrade loaders <span>Coming later</span></button>
+                    <button class="upgrade-button" type="button" disabled>Upgrade trucks <span>Coming later</span></button>
+                </div>
+                <div>
+                    <h3>Processing</h3>
+                    <button class="upgrade-button" type="button" disabled>Upgrade geophysics <span>Coming later</span></button>
+                    <button class="upgrade-button" type="button" disabled>Upgrade plant <span>Coming later</span></button>
+                    <button class="upgrade-button" type="button" disabled>Advanced techniques <span>Coming later</span></button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="workspace-section" id="graphs-section" style="display: none;">
+        <div class="panel workspace-card">
+            <div class="panel-heading">
+                <div>
+                    <p class="eyebrow">Operating performance</p>
+                    <h2>Mining rates</h2>
+                </div>
+                <button id="hide-graphs-button" class="button button--small" type="button">Hide graphs</button>
+            </div>
+            <div class="graph-grid">
+                <div class="graph-container" id="ore-rate-graph"></div>
+                <div class="graph-container" id="waste-rate-graph"></div>
+            </div>
+        </div>
+    </section>
+
+    <script src="popup.js"></script>
+</body>
+</html>

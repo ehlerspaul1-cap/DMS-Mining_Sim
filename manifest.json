@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Mining Game Extension",
+  "description": "A mining game where you mine blocks in a V-shape pattern.",
+  "version": "1.0",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "128": "icon.png"
+  }
+}

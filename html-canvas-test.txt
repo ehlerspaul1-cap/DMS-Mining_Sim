@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Width Canvas</title>
+    <style>
+        #block-canvas {
+            display: block; /* Prevents scrollbar */
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <canvas id="block-canvas" width="1500px" height="720"></canvas>
+    </div>
+    <script>
+        window.addEventListener('resize', resizeCanvas);
+
+        function resizeCanvas() {
+            const canvas = document.getElementById('block-canvas');
+            canvas.style.width = window.innerWidth + 'px';
+        }
+
+        // Initial resize to set the canvas width on page load
+        resizeCanvas();
+    </script>
+</body>
+</html>
