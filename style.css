@@ -391,10 +391,23 @@ a {
     margin-bottom: 20px;
 }
 
+.pfs-assumptions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: -6px 0 18px;
+}
+
+.pfs-assumptions span,
 .pfs-confidence span {
     padding: 6px 9px;
     border-radius: 999px;
     background: rgba(155, 98, 184, 0.14);
+}
+
+.pfs-assumptions span {
+    color: #eee6f4;
+    font-size: 0.78rem;
 }
 
 .pfs-disclaimer {

@@ -58,10 +58,18 @@ document.addEventListener('DOMContentLoaded', () => {
         WASTE_MINING_COST_UG: 100,
         WASTE_MINING_COST_OC: 2.5,
         ORE_MINING_COST_OC: 2.5,
+        ORE_LOAD_AND_HAUL_COST_PER_TON: 3.5,
+        WASTE_LOAD_AND_HAUL_COST_PER_TON: 1.5,
         DRILLING_COST_PER_UNIT: 200,
-        PROCESSING_COST_PER_TON: 50,
+        PROCESSING_COST_PER_TON: 35,
         ORE_MINING_COST_UG: 100,
         WASTE_DENSITY: 2.67,
+        PFS_MINING_RECOVERY: 0.95,
+        PFS_DILUTION_RATE: 0.05,
+        PFS_GA_COST_PER_TON: 5,
+        PFS_SUSTAINING_CLOSURE_COST_PER_TON: 3,
+        PFS_ROYALTY_AND_SELLING_RATE: 0.04,
+        PFS_OPERATING_CONTINGENCY_RATE: 0.10,
         miningWidth: 1,
         INITIAL_MAX_DRILL_LENGTH: 200,
         UPGRADED_MAX_DRILL_LENGTH: 400,
@@ -989,21 +997,54 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const recovery = Math.min(0.98, state.recoveryRate);
+        const miningRecovery = constants.PFS_MINING_RECOVERY;
+        const dilutionRate = constants.PFS_DILUTION_RATE;
         const averageGrade = copperTons > 0 ? weightedGrade / copperTons : 0;
         const averageCoalGrade = coalTons > 0 ? weightedCoalGrade / coalTons : 0;
-        const containedCopper = copperTons * (averageGrade / 100);
+        const recoveredOreBeforeDilution = oreTons * miningRecovery;
+        const dilutionTons = recoveredOreBeforeDilution * dilutionRate;
+        const plantFeedTons = recoveredOreBeforeDilution + dilutionTons;
+        const copperPlantFeedTons = oreTons > 0
+            ? plantFeedTons * (copperTons / oreTons)
+            : 0;
+        const coalPlantFeedTons = oreTons > 0
+            ? plantFeedTons * (coalTons / oreTons)
+            : 0;
+        const containedCopper = copperTons * miningRecovery * (averageGrade / 100);
         const recoveredCopper = containedCopper * recovery;
+        const dilutedAverageGrade = copperPlantFeedTons > 0
+            ? containedCopper / copperPlantFeedTons * 100
+            : 0;
         const copperValue = recoveredCopper * state.COPPER_PRICE_PER_TON;
-        const coalValue = coalTons * constants.COAL_PRICE_PER_TON;
+        const coalValue = coalTons * miningRecovery * constants.COAL_PRICE_PER_TON;
         const grossValue = copperValue + coalValue;
+        const oreMiningRate =
+            constants.ORE_MINING_COST_OC + constants.ORE_LOAD_AND_HAUL_COST_PER_TON;
+        const wasteMiningRate =
+            constants.WASTE_MINING_COST_OC + constants.WASTE_LOAD_AND_HAUL_COST_PER_TON;
         const miningCost =
-            oreTons * constants.ORE_MINING_COST_OC +
-            wasteTons * constants.WASTE_MINING_COST_OC;
+            oreTons * oreMiningRate +
+            wasteTons * wasteMiningRate;
         const processingCost =
-            copperTons * constants.PROCESSING_COST_PER_TON +
-            coalTons * constants.COAL_PROCESSING_COST_PER_TON;
+            copperPlantFeedTons * constants.PROCESSING_COST_PER_TON +
+            coalPlantFeedTons * constants.COAL_PROCESSING_COST_PER_TON;
+        const gaCost = plantFeedTons * constants.PFS_GA_COST_PER_TON;
+        const sustainingCost =
+            plantFeedTons * constants.PFS_SUSTAINING_CLOSURE_COST_PER_TON;
+        const royaltyAndSellingCost =
+            grossValue * constants.PFS_ROYALTY_AND_SELLING_RATE;
+        const operatingContingency =
+            (miningCost + processingCost + gaCost) *
+            constants.PFS_OPERATING_CONTINGENCY_RATE;
         const indicativeMargin =
-            grossValue - miningCost - processingCost - constants.BUILD_RESOURCE_COST;
+            grossValue -
+            miningCost -
+            processingCost -
+            gaCost -
+            sustainingCost -
+            royaltyAndSellingCost -
+            operatingContingency -
+            constants.BUILD_RESOURCE_COST;
         const strippingRatio = oreTons > 0 ? wasteTons / oreTons : 0;
 
         elements.totalResourceValueElement.textContent = `$${formatNumber(grossValue.toFixed(0))}`;
@@ -1022,13 +1063,25 @@ document.addEventListener('DOMContentLoaded', () => {
             wasteTons,
             confidenceTons,
             averageGrade,
+            dilutedAverageGrade,
             averageCoalGrade,
             recoveredCopper,
+            plantFeedTons,
+            dilutionTons,
             grossValue,
             miningCost,
             processingCost,
+            gaCost,
+            sustainingCost,
+            royaltyAndSellingCost,
+            operatingContingency,
             indicativeMargin,
-            strippingRatio
+            strippingRatio,
+            recovery,
+            miningRecovery,
+            dilutionRate,
+            oreMiningRate,
+            wasteMiningRate
         };
 
         if (oreTons > 0) {
@@ -1048,7 +1101,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const resourceLabel = result.averageCoalGrade > 0 ? 'Coal resource' : 'Copper resource';
         const gradeLabel = result.averageCoalGrade > 0
             ? `${result.averageCoalGrade.toFixed(0)} kcal/kg average GCV`
-            : `${result.averageGrade.toFixed(2)}% Cu average grade`;
+            : `${result.dilutedAverageGrade.toFixed(2)}% Cu diluted feed grade`;
 
         pfsPopup.innerHTML = `
             <div class="modal-card modal-card--pfs" role="dialog" aria-modal="true" aria-labelledby="pfs-title">
@@ -1060,13 +1113,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 </p>
                 <div class="pfs-grid">
                     <div><span>Data-supported blocks</span><strong>${formatNumber(result.supportedBlocks)}</strong></div>
-                    <div><span>${resourceLabel}</span><strong>${formatNumber(result.oreTons.toFixed(0))} t</strong></div>
+                    <div><span>In-situ ${resourceLabel.toLowerCase()}</span><strong>${formatNumber(result.oreTons.toFixed(0))} t</strong></div>
                     <div><span>Quality</span><strong>${gradeLabel}</strong></div>
                     <div><span>Stripping ratio</span><strong>${result.strippingRatio.toFixed(2)} : 1</strong></div>
+                    <div><span>Plant feed after loss and dilution</span><strong>${formatNumber(result.plantFeedTons.toFixed(0))} t</strong></div>
                     <div><span>Gross recovered value</span><strong>$${formatNumber(result.grossValue.toFixed(0))}</strong></div>
-                    <div><span>Mining cost</span><strong>$${formatNumber(result.miningCost.toFixed(0))}</strong></div>
+                    <div><span>Open-pit mining incl. load and haul</span><strong>$${formatNumber(result.miningCost.toFixed(0))}</strong></div>
                     <div><span>Processing cost</span><strong>$${formatNumber(result.processingCost.toFixed(0))}</strong></div>
-                    <div class="${marginClass}"><span>Indicative margin</span><strong>$${formatNumber(result.indicativeMargin.toFixed(0))}</strong></div>
+                    <div><span>Site G&amp;A</span><strong>$${formatNumber(result.gaCost.toFixed(0))}</strong></div>
+                    <div><span>Sustaining and closure allowance</span><strong>$${formatNumber(result.sustainingCost.toFixed(0))}</strong></div>
+                    <div><span>Royalty and selling allowance</span><strong>$${formatNumber(result.royaltyAndSellingCost.toFixed(0))}</strong></div>
+                    <div><span>Operating contingency</span><strong>$${formatNumber(result.operatingContingency.toFixed(0))}</strong></div>
+                    <div><span>Mini PFS study cost</span><strong>$${formatNumber(constants.BUILD_RESOURCE_COST)}</strong></div>
+                    <div class="${marginClass}"><span>Pre-capital indicative margin</span><strong>$${formatNumber(result.indicativeMargin.toFixed(0))}</strong></div>
+                </div>
+                <div class="pfs-assumptions" aria-label="Mini PFS assumptions">
+                    <span>Ore mining: $${result.oreMiningRate.toFixed(2)}/t</span>
+                    <span>Waste mining: $${result.wasteMiningRate.toFixed(2)}/t</span>
+                    <span>Copper processing: $${constants.PROCESSING_COST_PER_TON.toFixed(2)}/t</span>
+                    <span>Mining recovery: ${(result.miningRecovery * 100).toFixed(0)}%</span>
+                    <span>Dilution: ${(result.dilutionRate * 100).toFixed(0)}%</span>
+                    <span>Metallurgical recovery: ${(result.recovery * 100).toFixed(0)}%</span>
+                    <span>Copper price: $${formatNumber(state.COPPER_PRICE_PER_TON.toFixed(0))}/t</span>
                 </div>
                 <div class="pfs-confidence">
                     <span>Measured: ${formatNumber(result.confidenceTons.measured.toFixed(0))} t</span>
@@ -1074,7 +1142,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span>Inferred: ${formatNumber(result.confidenceTons.inferred.toFixed(0))} t</span>
                 </div>
                 <p class="pfs-disclaimer">
-                    Educational screening result only. It is not a code-compliant mineral
+                    Educational screening result only. Capital cost, financing, tax and
+                    discounted cash flow are excluded. This is not a code-compliant mineral
                     resource estimate or professional pre-feasibility study.
                 </p>
                 <button class="button button--primary" id="close-pfs-button" type="button">Return to project</button>
@@ -1593,18 +1662,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function calculateLoadAndHaulCost(type, tons) {
-        const loadAndHaulCostPerTon = type === 'ore' ? 3.5 : 1.5;
+        const loadAndHaulCostPerTon = type === 'ore'
+            ? constants.ORE_LOAD_AND_HAUL_COST_PER_TON
+            : constants.WASTE_LOAD_AND_HAUL_COST_PER_TON;
         return loadAndHaulCostPerTon * tons;
     }
 
     function calculateMiningCost(type, method) {
         const blockVolume = Math.pow(state.mineSize, 3);
+        const blockDensity = type === 'waste'
+            ? constants.WASTE_DENSITY
+            : constants.oreDensity;
+        const blockTons = blockVolume * blockDensity;
         let cost = 0;
 
         if (type === 'waste') {
-            cost = method === 'OC' ? constants.WASTE_MINING_COST_OC * blockVolume : constants.WASTE_MINING_COST_UG * blockVolume;
+            cost = method === 'OC'
+                ? constants.WASTE_MINING_COST_OC * blockTons
+                : constants.WASTE_MINING_COST_UG * blockTons;
         } else if (type === 'ore') {
-            cost = method === 'OC' ? constants.ORE_MINING_COST_OC * blockVolume : constants.ORE_MINING_COST_UG * blockVolume;
+            cost = method === 'OC'
+                ? constants.ORE_MINING_COST_OC * blockTons
+                : constants.ORE_MINING_COST_UG * blockTons;
         }
 
         return cost;
