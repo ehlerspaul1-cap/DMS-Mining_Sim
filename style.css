@@ -262,6 +262,70 @@ a {
     color: var(--muted);
 }
 
+.games-section {
+    max-width: none;
+    padding-inline: clamp(24px, 8vw, 130px);
+    background:
+        radial-gradient(circle at 85% 20%, rgba(111, 44, 145, 0.2), transparent 32%),
+        #0d0913;
+    border-top: 1px solid var(--border);
+}
+
+.game-showcase {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 552px);
+    align-items: center;
+    gap: clamp(36px, 7vw, 90px);
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: clamp(30px, 5vw, 56px);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: linear-gradient(145deg, rgba(32, 24, 43, 0.96), rgba(17, 13, 24, 0.96));
+    box-shadow: var(--shadow);
+}
+
+.game-showcase h2 {
+    margin-bottom: 14px;
+}
+
+.game-showcase__copy > p:not(.eyebrow) {
+    max-width: 620px;
+    color: var(--muted);
+    font-size: 1.05rem;
+}
+
+.game-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 22px 0;
+}
+
+.game-meta span {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(0, 212, 161, 0.1);
+    color: #bdf7e9;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.itch-embed {
+    width: 100%;
+    overflow: hidden;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+}
+
+.itch-embed iframe {
+    display: block;
+    width: 100%;
+    max-width: 552px;
+    border: 0;
+}
+
 .site-footer {
     display: flex;
     justify-content: space-between;
@@ -827,6 +891,14 @@ a {
         grid-template-columns: 1fr;
     }
 
+    .game-showcase {
+        grid-template-columns: 1fr;
+    }
+
+    .itch-embed {
+        max-width: 552px;
+    }
+
     .action-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -853,9 +925,14 @@ a {
 
     .site-nav {
         width: 100%;
-        justify-content: space-between;
+        justify-content: flex-start;
+        flex-wrap: wrap;
         gap: 12px;
         font-size: 0.88rem;
+    }
+
+    .game-showcase {
+        padding: 24px;
     }
 
     .brand img {
