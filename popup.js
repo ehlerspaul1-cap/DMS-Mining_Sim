@@ -196,9 +196,9 @@ document.addEventListener('DOMContentLoaded', () => {
         completedObjectives: {},
         dialogueIndex: 0,
         dialogues: [
-            "Welcome to the DMS Mining Simulator",
-            "We will try to teach you the basics of mining.",
-            "Let's start with a Geophysical study to get an idea of what is around you."
+            "Welcome to the DMS Mining Simulator.",
+            "This guided project introduces the basics of mining.",
+            "Let's start with a geophysical study to identify potential targets."
         ],
         currentSeed: Math.floor(Math.random() * 100000),
         blockCounts: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
@@ -472,8 +472,8 @@ document.addEventListener('DOMContentLoaded', () => {
             wasteRateChart = anychart.line();
 
             // Set titles
-            oreRateChart.title('Ore Mining Rate (tons/day)');
-            wasteRateChart.title('Waste Mining Rate (tons/day)');
+            oreRateChart.title('Ore Mining Rate (tonnes/day)');
+            wasteRateChart.title('Waste Mining Rate (tonnes/day)');
 
             // Set the series
             oreRateChart.line(oreRateMapping).name('Ore Mining Rate').stroke('Green');
@@ -1427,7 +1427,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let drillLength = Math.sqrt(Math.pow((endX - startX), 2) + Math.pow((endY - startY), 2));
         if (drillLength > state.currentMaxDrillLength) {
-            alert(`Drilling length exceeds the maximum allowed length of ${state.currentMaxDrillLength} meters. Drilling to the maximum allowed length.`);
+            alert(`Drilling length exceeds the maximum allowed length of ${state.currentMaxDrillLength} metres. Drilling to the maximum allowed length.`);
             drillLength = state.currentMaxDrillLength;
 
             // Calculate the end coordinates based on the maximum allowed length
@@ -1508,33 +1508,33 @@ document.addEventListener('DOMContentLoaded', () => {
         const strippingRatio = oreBlocks > 0 ? (state.blockCounts[1] / oreBlocks).toFixed(2) : 'N/A';
 
         const reportContent = `
-        <div style="margin-bottom: 10px;"><strong>Total Cost:</strong> $${formatNumber(totalCost.toFixed(2))}</div>
-        <div style="margin-bottom: 10px;"><strong>Total Revenue:</strong> $${formatNumber(totalRevenue.toFixed(2))}</div>
-        <div style="margin-bottom: 10px;"><strong>Profit/Loss:</strong> $${formatNumber(profitLoss.toFixed(2))}</div>
-        <div style="margin-bottom: 10px;"><strong>Stripping Ratio:</strong> ${strippingRatio}</div>
-        <div style="margin-top: 20px;"><strong>Blocks Mined:</strong></div>
-        <div style="margin-left: 20px; margin-bottom: 5px;">- Waste Blocks: ${state.blockCounts[1]}</div>
-        <div style="margin-left: 20px; margin-bottom: 5px;">- Low Grade Copper: ${state.blockCounts[2]}</div>
-        <div style="margin-left: 20px; margin-bottom: 5px;">- Med Grade Copper: ${state.blockCounts[3]}</div>
-        <div style="margin-left: 20px; margin-bottom: 5px;">- High Grade Copper: ${state.blockCounts[4]}</div>
-        <div style="margin-left: 20px; margin-bottom: 5px;">- Coal Blocks: ${state.blockCounts[5]}</div>
+        <div style="margin-bottom: 10px;"><strong>Total cost:</strong> $${formatNumber(totalCost.toFixed(2))}</div>
+        <div style="margin-bottom: 10px;"><strong>Total revenue:</strong> $${formatNumber(totalRevenue.toFixed(2))}</div>
+        <div style="margin-bottom: 10px;"><strong>Profit/loss:</strong> $${formatNumber(profitLoss.toFixed(2))}</div>
+        <div style="margin-bottom: 10px;"><strong>Stripping ratio:</strong> ${strippingRatio}</div>
+        <div style="margin-top: 20px;"><strong>Blocks mined:</strong></div>
+        <div style="margin-left: 20px; margin-bottom: 5px;">- Waste blocks: ${state.blockCounts[1]}</div>
+        <div style="margin-left: 20px; margin-bottom: 5px;">- Low-grade copper blocks: ${state.blockCounts[2]}</div>
+        <div style="margin-left: 20px; margin-bottom: 5px;">- Medium-grade copper blocks: ${state.blockCounts[3]}</div>
+        <div style="margin-left: 20px; margin-bottom: 5px;">- High-grade copper blocks: ${state.blockCounts[4]}</div>
+        <div style="margin-left: 20px; margin-bottom: 5px;">- Coal blocks: ${state.blockCounts[5]}</div>
         <div style="margin-top: 20px;"><strong>Drilling:</strong></div>
-        <div style="margin-left: 20px; margin-bottom: 5px;">- Total Length Drilled: ${formatNumber((state.totalDrilledLength || 0).toFixed(2))} meters</div>
-        <div style="margin-left: 20px; margin-bottom: 5px;">- Total Length Intersected: ${formatNumber((state.totalIntersectedLength || 0).toFixed(2))} meters</div>
-        <div style="margin-left: 20px; margin-bottom: 5px;">- Total Drilling Cost: $${formatNumber((state.totalDrillingCost || 0).toFixed(2))}</div>
-        <div style="margin-top: 20px;"><strong>Additional Report:</strong></div>
-        <div style="margin-left: 20px; margin-bottom: 5px;">- Tons Sent to Mill: ${formatNumber((state.totalOreTonsMined || 0).toFixed(2))} tons</div>
-        <div style="margin-left: 20px; margin-bottom: 5px;">- Copper Extracted: ${formatNumber((state.totalCopperExtracted || 0).toFixed(2))} tons</div>
-        <div style="margin-left: 20px; margin-bottom: 5px;">- Waste Mining Cost (OC): $${formatNumber((state.wasteMiningCostOC || 0).toFixed(2))}</div>
-        <div style="margin-left: 20px; margin-bottom: 5px;">- Waste Mining Cost (UG): $${formatNumber((state.wasteMiningCostUG || 0).toFixed(2))}</div>
-        <div style="margin-left: 20px; margin-bottom: 5px;">- Ore Mining Cost: $${formatNumber((state.totalOreMiningCost || 0).toFixed(2))}</div>
-        <div style="margin-left: 20px; margin-bottom: 5px;">- Ore Processing Cost: $${formatNumber((state.totalOreProcessingCost || 0).toFixed(2))}</div>
-        <div style="margin-left: 20px; margin-bottom: 5px;">- Coal Tons Mined: ${formatNumber((state.totalCoalTonsMined || 0).toFixed(2))} tons</div>
-        <div style="margin-left: 20px; margin-bottom: 5px;">- Total Ore Tons Mined: ${formatNumber((state.totalOreTonsMined || 0).toFixed(2))} tons</div>
-        <div style="margin-left: 20px; margin-bottom: 5px;">- Total Waste Tons: ${formatNumber((state.totalWasteTons || 0).toFixed(2))} tons</div>
-        <div style="margin-top: 20px;"><strong>Mining Rates:</strong></div>
-        <div style="margin-left: 20px; margin-bottom: 5px;">- Current Ore Mining Rate: ${formatNumber((state.oreMiningRate || 0).toFixed(2))} tons/day</div>
-        <div style="margin-left: 20px; margin-bottom: 5px;">- Current Waste Mining Rate: ${formatNumber((state.wasteMiningRate || 0).toFixed(2))} tons/day</div>
+        <div style="margin-left: 20px; margin-bottom: 5px;">- Total length drilled: ${formatNumber((state.totalDrilledLength || 0).toFixed(2))} metres</div>
+        <div style="margin-left: 20px; margin-bottom: 5px;">- Total length intersected: ${formatNumber((state.totalIntersectedLength || 0).toFixed(2))} metres</div>
+        <div style="margin-left: 20px; margin-bottom: 5px;">- Total drilling cost: $${formatNumber((state.totalDrillingCost || 0).toFixed(2))}</div>
+        <div style="margin-top: 20px;"><strong>Production summary:</strong></div>
+        <div style="margin-left: 20px; margin-bottom: 5px;">- Tonnes sent to the plant: ${formatNumber((state.totalOreTonsMined || 0).toFixed(2))} tonnes</div>
+        <div style="margin-left: 20px; margin-bottom: 5px;">- Copper recovered: ${formatNumber((state.totalCopperExtracted || 0).toFixed(2))} tonnes</div>
+        <div style="margin-left: 20px; margin-bottom: 5px;">- Waste mining cost (open pit): $${formatNumber((state.wasteMiningCostOC || 0).toFixed(2))}</div>
+        <div style="margin-left: 20px; margin-bottom: 5px;">- Waste mining cost (underground): $${formatNumber((state.wasteMiningCostUG || 0).toFixed(2))}</div>
+        <div style="margin-left: 20px; margin-bottom: 5px;">- Ore mining cost: $${formatNumber((state.totalOreMiningCost || 0).toFixed(2))}</div>
+        <div style="margin-left: 20px; margin-bottom: 5px;">- Ore processing cost: $${formatNumber((state.totalOreProcessingCost || 0).toFixed(2))}</div>
+        <div style="margin-left: 20px; margin-bottom: 5px;">- Coal mined: ${formatNumber((state.totalCoalTonsMined || 0).toFixed(2))} tonnes</div>
+        <div style="margin-left: 20px; margin-bottom: 5px;">- Total ore mined: ${formatNumber((state.totalOreTonsMined || 0).toFixed(2))} tonnes</div>
+        <div style="margin-left: 20px; margin-bottom: 5px;">- Total waste mined: ${formatNumber((state.totalWasteTons || 0).toFixed(2))} tonnes</div>
+        <div style="margin-top: 20px;"><strong>Mining rates:</strong></div>
+        <div style="margin-left: 20px; margin-bottom: 5px;">- Current ore mining rate: ${formatNumber((state.oreMiningRate || 0).toFixed(2))} tonnes/day</div>
+        <div style="margin-left: 20px; margin-bottom: 5px;">- Current waste mining rate: ${formatNumber((state.wasteMiningRate || 0).toFixed(2))} tonnes/day</div>
     `;
 
         elements.reportContainer.innerHTML = reportContent;
@@ -1545,10 +1545,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.reportContainer.style.display === 'none' || !elements.reportContainer.style.display) {
             generateReport();
             elements.reportContainer.style.display = 'block';
-            elements.drillReportButton.textContent = 'Hide Report';
+            elements.drillReportButton.textContent = 'Hide project report';
         } else {
             elements.reportContainer.style.display = 'none';
-            elements.drillReportButton.textContent = 'Show Report';
+            elements.drillReportButton.textContent = 'Show project report';
         }
     }
 
@@ -1561,10 +1561,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const averageOreGrade = totalOreTons > 0 ? totalOreGrade / totalOreTons : 0;
         const reportContent = `
-            <div style="margin-top: 20px;"><strong>Stockpile Report:</strong></div>
-            <div>Total Ore Tons: ${formatNumber(totalOreTons.toFixed(2))} tons</div>
-            <div>Average Ore Grade: ${averageOreGrade.toFixed(2)}%</div>
-            <div>Total Waste Tons: ${formatNumber(state.totalWasteTons.toFixed(2))} tons</div>
+            <div style="margin-top: 20px;"><strong>Stockpile report:</strong></div>
+            <div>Total ore: ${formatNumber(totalOreTons.toFixed(2))} tonnes</div>
+            <div>Average ore grade: ${averageOreGrade.toFixed(2)}%</div>
+            <div>Total waste: ${formatNumber(state.totalWasteTons.toFixed(2))} tonnes</div>
         `;
         const stockpileReportContainer = document.getElementById('stockpile-report-container');
         stockpileReportContainer.innerHTML = reportContent;
@@ -1575,10 +1575,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (stockpileReportContainer.style.display === 'none' || !stockpileReportContainer.style.display) {
             generateStockpileReport();
             stockpileReportContainer.style.display = 'block';
-            elements.stockpileReportButton.textContent = 'Hide Stockpile Report';
+            elements.stockpileReportButton.textContent = 'Hide stockpile report';
         } else {
             stockpileReportContainer.style.display = 'none';
-            elements.stockpileReportButton.textContent = 'Stockpile Report';
+            elements.stockpileReportButton.textContent = 'Show stockpile report';
         }
     }
 

@@ -5,18 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="DMS Mining educational mining simulator.">
     <title>DMS Mining Simulator</title>
-    <link rel="stylesheet" href="style.css?v=20260611-2">
+    <link rel="stylesheet" href="style.css?v=20260611-3">
     <script src="https://cdn.anychart.com/releases/8.12.1/js/anychart-base.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/seedrandom/2.4.4/seedrandom.min.js"></script>
 </head>
 <body class="simulator-page">
     <header class="site-header site-header--dark">
-        <a class="brand" href="popup-sim.html?v=20260611-2">
+        <a class="brand" href="popup-sim.html?v=20260611-3">
             <img src="icon.png" alt="DMS Mining">
             <span>DMS Mining Simulator</span>
         </a>
         <nav class="site-nav" aria-label="Simulator navigation">
-            <a href="popup-sim.html?v=20260611-2">Home</a>
+            <a href="popup-sim.html?v=20260611-3">Home</a>
             <a href="https://www.youtube.com/@Paul_Ehlers" target="_blank" rel="noopener">Tutorials</a>
             <button class="nav-button" id="about-button" type="button">Contact</button>
         </nav>
@@ -92,7 +92,7 @@
                 <div id="average-grade"></div>
                 <div id="average-recovery"></div>
                 <div class="seed-control" id="seed-container">
-                    <label for="seed-input">Generate a repeatable geology</label>
+                    <label for="seed-input">Generate repeatable geology</label>
                     <div>
                         <input type="number" id="seed-input" placeholder="Enter seed">
                         <button id="set-seed-button" class="button button--small" type="button">Set seed</button>
@@ -141,13 +141,13 @@
                 </button>
                 <button id="mine-open-cut-button" class="action-card" type="button">
                     <span class="action-card__step">Mine</span>
-                    <strong>Open pit mining</strong>
-                    <small>Mine from surface downward</small>
+                    <strong>Open-pit mining</strong>
+                    <small>Mine downward from the surface</small>
                 </button>
                 <button id="mine-underground-button" class="action-card" type="button">
                     <span class="action-card__step">Mine</span>
                     <strong>Underground mining</strong>
-                    <small>Mine from an exposed access</small>
+                    <small>Mine from an established underground access</small>
                 </button>
             </div>
             <div class="utility-actions">
@@ -224,7 +224,7 @@
                 </div>
                 <div>
                     <h3>Equipment</h3>
-                    <button class="upgrade-button" type="button" disabled>Upgrade drill and blast <span>Coming later</span></button>
+                    <button class="upgrade-button" type="button" disabled>Upgrade drilling and blasting <span>Coming later</span></button>
                     <button id="upgrade-exploration-rigs-button" class="upgrade-button" type="button">Upgrade exploration rigs <span>$300 000</span></button>
                     <button class="upgrade-button" type="button" disabled>Upgrade loaders <span>Coming later</span></button>
                     <button class="upgrade-button" type="button" disabled>Upgrade trucks <span>Coming later</span></button>
@@ -255,6 +255,6 @@
         </div>
     </section>
 
-    <script src="popup.js?v=20260611-2"></script>
+    <script src="popup.js?v=20260611-3"></script>
 </body>
 </html>
