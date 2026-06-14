@@ -285,6 +285,10 @@ a {
     box-shadow: var(--shadow);
 }
 
+.game-showcase + .game-showcase {
+    margin-top: 30px;
+}
+
 .game-showcase h2 {
     margin-bottom: 14px;
 }
